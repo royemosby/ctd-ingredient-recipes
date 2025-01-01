@@ -1,0 +1,48 @@
+@font-face {
+  font-family: "WorkSans";
+  src: url('./assets/fonts/WorkSans/WorkSans-Regular.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "WorkSans Light";
+  src: url('./assets/fonts/WorkSans/WorkSans-Light.ttf')format("truetype");
+}
+
+@font-face {
+  font-family: "WorkSans Bold";
+  src: url('./assets/fonts/WorkSans/WorkSans-ExtraBold.ttf')format("truetype");
+}
+
+:root {
+  font-family: "WorkSans", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* pulling colors from reasonable-colors library */
+
+  --header-height: 160px;
+  --medium-radius: 22px;
+  --small-radius: 12px;
+
+  --light-blue: var(--color-sky-1);
+  --medium-blue: var(--color-sky-2);
+  --dark-blue: var(--color-sky-6);
+
+  --medium-gray: var(--color-gray-3);
+
+  --light-red: var(--color-raspberry-2);
+  --medium-red: var(--color-raspberry-3);
+
+  --medium-yellow: var(--color-yellow-1);
+  --dark-yellow: var(--color-yellow-2);
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+  color: #12284c;
+  background-color: var(--light-blue);
+}
