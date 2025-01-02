@@ -8,9 +8,15 @@ const BASE_URL = 'https://api.spoonacular.com/recipes';
 function App() {
   const [term, setTerm] = useState('');
   const [recipes, setRecipes] = useState([]);
+  const [searchCache, setSearchCache] = useState({});
 
   useEffect(() => {
     if (!term) {
+      return;
+    }
+    if (searchCache[term]) {
+      setRecipes([...searchCache[term]]);
+      setTerm('');
       return;
     }
     async function getRecipes() {
@@ -29,13 +35,18 @@ function App() {
           // resp includes number, offset, totalResults
           const recipeList = await resp.json();
           setRecipes([...recipeList.results]);
+          setSearchCache((prev) => ({
+            ...prev,
+            [term]: [...recipeList.results],
+          }));
+          setTerm('');
         }
       } catch (e) {
         console.log(e);
       }
     }
     getRecipes();
-  }, [term]);
+  }, [term, searchCache]);
   return (
     <>
       <main>
