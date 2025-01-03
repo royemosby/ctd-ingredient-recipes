@@ -67,7 +67,7 @@ function App() {
       }
     }
     getRecipes();
-  }, [term, searchCache, nextOffset]);
+  }, [term, searchCache, nextOffset, currentOffset]);
 
   useEffect(() => {
     setNextOffset(0);
@@ -81,7 +81,7 @@ function App() {
       return;
     }
     setNextOffset(currentOffset + paginationSize);
-    setTimeout(() => setIsPaginationDisabled(false), 1000);
+    setTimeout(() => setIsPaginationDisabled(false), 650);
   }
 
   function pageBack() {
@@ -90,7 +90,7 @@ function App() {
       return;
     }
     setNextOffset(currentOffset - paginationSize);
-    setTimeout(() => setIsPaginationDisabled(false), 1000);
+    setTimeout(() => setIsPaginationDisabled(false), 650);
   }
 
   function isBackButtonDisabled() {
