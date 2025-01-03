@@ -19,15 +19,20 @@ function App() {
     if (!term) {
       return;
     }
+    if (nextOffset > 0) {
+      if (nextOffset === currentOffset) {
+        return;
+      }
+    }
     const pendingQuery = `${term} offset ${nextOffset}`;
-    console.log(pendingQuery);
-    // if (searchCache[pendingQuery]) {
-    //   setCurrentOffset(nextOffset);
-    //   setRecipes([...searchCache[term]]);
-    //   setTerm('');
-    //   return;
-    // }
+    if (searchCache[pendingQuery]) {
+      console.log('setting from cache: ', searchCache[pendingQuery]);
+      setCurrentOffset(nextOffset);
+      setRecipes([...searchCache[pendingQuery]]);
+      return;
+    }
     async function getRecipes() {
+      console.log('fetching from api...');
       const options = {
         headers: {
           'Content-Type': 'application/json',
@@ -49,17 +54,12 @@ function App() {
           setRecipes([...results.results]);
           setResultsCount(results.totalResults);
           setCurrentOffset(results.offset);
-          // setSearchCache((prev) => {
-          //   console.log('debug setSearchCache', prev);
-          //   console.dir({
-          //     ...prev,
-          //     [`${term} offset ${results.offset}`]: [...results.results],
-          //   });
-          //   return {
-          //     ...prev,
-          //     [`${term} offset ${results.offset}`]: [...results.results],
-          //   };
-          // });
+          setSearchCache((prev) => {
+            return {
+              ...prev,
+              [`${term} offset ${results.offset}`]: [...results.results],
+            };
+          });
           //setTerm('');
         }
       } catch (e) {
