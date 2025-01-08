@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import './App.css';
 import IngredientForm from './components/IngredientForm';
 import RecipeList from './components/RecipeList';
 
 const KEY = import.meta.env.VITE__API_KEY;
 const BASE_URL = 'https://api.spoonacular.com/recipes';
+
 function App() {
   const [term, setTerm] = useState('');
   const [recipes, setRecipes] = useState([]);
@@ -15,16 +16,26 @@ function App() {
   const [isPaginationDisabled, setIsPaginationDisabled] = useState(false);
   const paginationSize = 10;
 
+  const pendingQuery = useMemo(
+    () => `${term} offset ${nextOffset}`,
+    [term, nextOffset]
+  );
+
+  const paginationInfo = useMemo(
+    () => ({
+      currentPage: Math.floor(currentOffset / paginationSize) + 1,
+      totalPages: Math.ceil(resultsCount / paginationSize),
+    }),
+    [currentOffset, resultsCount, paginationSize]
+  );
+
   useEffect(() => {
     if (!term) {
       return;
     }
-    if (nextOffset > 0) {
-      if (nextOffset === currentOffset) {
-        return;
-      }
+    if (nextOffset > 0 && nextOffset === currentOffset) {
+      return;
     }
-    const pendingQuery = `${term} offset ${nextOffset}`;
     if (searchCache[pendingQuery]) {
       console.log('setting from cache: ', searchCache[pendingQuery]);
       setCurrentOffset(nextOffset);
@@ -45,57 +56,44 @@ function App() {
         `offset=${nextOffset}`,
         `number=${paginationSize}`,
       ];
-      const url = `${BASE_URL}/complexSearch?${params.join('&')}`;
-      console.log(url);
+      const queryString = params.join('&');
       try {
-        const resp = await fetch(url, options);
+        const resp = await fetch(
+          `${BASE_URL}/complexSearch?${queryString}`,
+          options
+        );
         if (resp.ok) {
-          const results = await resp.json();
-          setRecipes([...results.results]);
-          setResultsCount(results.totalResults);
-          setCurrentOffset(results.offset);
-          setSearchCache((prev) => {
-            return {
-              ...prev,
-              [`${term} offset ${results.offset}`]: [...results.results],
-            };
-          });
-          //setTerm('');
+          const data = await resp.json();
+          setRecipes(data.results);
+          setResultsCount(data.totalResults);
+          setSearchCache((prevCache) => ({
+            ...prevCache,
+            [pendingQuery]: data.results,
+          }));
+          setCurrentOffset(nextOffset);
         }
       } catch (e) {
         console.log(e);
       }
     }
     getRecipes();
-  }, [term, searchCache, nextOffset, currentOffset]);
+  }, [term, nextOffset, currentOffset, searchCache, pendingQuery]);
+
+  const pageBack = () => {
+    setIsPaginationDisabled(true);
+    setNextOffset((prevOffset) => Math.max(prevOffset - paginationSize, 0));
+    setTimeout(() => setIsPaginationDisabled(false), 650);
+  };
+
+  const pageForward = () => {
+    setIsPaginationDisabled(true);
+    setNextOffset((prevOffset) => prevOffset + paginationSize);
+    setTimeout(() => setIsPaginationDisabled(false), 650);
+  };
 
   useEffect(() => {
     setNextOffset(0);
   }, [term]);
-
-  function pageForward() {
-    setIsPaginationDisabled(true);
-    const maxPages = Math.ceil(resultsCount / paginationSize);
-    const currentPage = Math.ceil(currentOffset / paginationSize) + 1;
-    if (currentPage >= maxPages) {
-      return;
-    }
-    setNextOffset(currentOffset + paginationSize);
-    setTimeout(() => setIsPaginationDisabled(false), 650);
-  }
-
-  function pageBack() {
-    setIsPaginationDisabled(true);
-    if (currentOffset <= 0) {
-      return;
-    }
-    setNextOffset(currentOffset - paginationSize);
-    setTimeout(() => setIsPaginationDisabled(false), 650);
-  }
-
-  function isBackButtonDisabled() {
-    return currentOffset + paginationSize >= resultsCount;
-  }
 
   return (
     <>
@@ -106,18 +104,20 @@ function App() {
         {recipes.length > 0 && (
           <div className="paginate">
             <button
-              disabled={currentOffset === 0 || isPaginationDisabled}
+              disabled={isPaginationDisabled || currentOffset === 0}
               onClick={pageBack}
             >
               Previous
             </button>
             <span>
-              Page {Math.floor(currentOffset / paginationSize) + 1} of{' '}
-              {Math.ceil(resultsCount / paginationSize)}
+              Page {paginationInfo.currentPage} of {paginationInfo.totalPages}
             </span>
             <button
               onClick={pageForward}
-              disabled={isBackButtonDisabled() || isPaginationDisabled}
+              disabled={
+                isPaginationDisabled ||
+                currentOffset + paginationSize >= resultsCount
+              }
             >
               Next
             </button>
